@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Netcode;
@@ -8,29 +7,26 @@ public class GameManager : NetworkBehaviour
 {
     [SerializeField] PlayerText playerTextPrefab;
     [SerializeField] GameObject panel;
-
     private NetworkVariable<List<FixedString128Bytes>> players =
         new NetworkVariable<List<FixedString128Bytes>>(
             new List<FixedString128Bytes>(),
              NetworkVariableReadPermission.Everyone,
               NetworkVariableWritePermission.Owner);
+    public static GameManager Instance { get; private set; }
+    void Awake()
+    {
+        Instance = this;
+    }
 
     public override void OnNetworkSpawn()
     {
         players.OnValueChanged += Players_OnValueChanged;
-        NetworkManager.Singleton.OnClientConnectedCallback += Singleton_OnClientConnectedCallback;
     }
 
     private void Players_OnValueChanged(List<FixedString128Bytes> previousValue, List<FixedString128Bytes> newValue)
     {
         UpdatePlayerList();
     }
-
-    private void Singleton_OnClientConnectedCallback(ulong obj)
-    {
-        players.Value.Add("Player " + OwnerClientId);
-    }
-
     public void UpdatePlayerList()
     {
         foreach (Transform child in panel.transform)
