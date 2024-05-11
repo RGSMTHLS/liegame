@@ -5,43 +5,19 @@ public class GameManager : NetworkBehaviour
 {
     [SerializeField] PlayerText playerTextPrefab;
     [SerializeField] GameObject panel;
-    private NetworkVariable<List<PlayerData>> players =
-        new NetworkVariable<List<PlayerData>>(
-            new List<PlayerData>(),
-             NetworkVariableReadPermission.Everyone,
-              NetworkVariableWritePermission.Owner);
+    private List<PlayerData> allPlayerData = new List<PlayerData>();
     public static GameManager Instance { get; private set; }
     void Awake() => Instance = this;
-    public override void OnNetworkSpawn()
-    {
-        players.OnValueChanged += Players_OnValueChanged;
-    }
-    private void Players_OnValueChanged(
-        List<PlayerData> previousValue,
-        List<PlayerData> newValue)
-    {
-        UpdatePlayerList();
-    }
-    public void UpdatePlayerList()
+    public void UpdatePlayerList(PlayerDataList playerDataList)
     {
         foreach (Transform child in panel.transform)
         {
             Destroy(child.gameObject);
         }
-
-        foreach (var player in players.Value)
+        foreach (var player in playerDataList.Players)
         {
             AddPlayer(player);
         }
-    }
-    public void UpdatePlayer(PlayerData updatedPlayer)
-    {
-        int index = players.Value.FindIndex(player => player.Id == updatedPlayer.Id);
-        if (index != -1)
-        {
-            players.Value[index] = updatedPlayer;
-        }
-        UpdatePlayerList();
     }
     public void AddPlayer(PlayerData data)
     {
@@ -49,5 +25,37 @@ public class GameManager : NetworkBehaviour
         playerTextGo.SetPlayerNameText(data.playerName.ToString());
         playerTextGo.SetPlayerScoreText(data.playerScore);
         playerTextGo.transform.SetParent(panel.transform, false);
+    }
+
+    private string SerializePlayerDataToJson(List<PlayerData> players)
+    {
+        PlayerDataList playerDataList = new PlayerDataList { Players = players };
+        return JsonUtility.ToJson(playerDataList);
+    }
+
+    private List<PlayerData> DeserializePlayerDataFromJson(string json)
+    {
+        PlayerDataList playerDataList = JsonUtility.FromJson<PlayerDataList>(json);
+        return playerDataList.Players;
+    }
+
+    [Rpc(SendTo.Server)]
+    public void SendPlayerDataToServerRpc(PlayerData data)
+    {
+        if (allPlayerData.Contains(data))
+            return;
+
+        allPlayerData.Add(data);
+        string jsonData = SerializePlayerDataToJson(allPlayerData);
+
+        List<PlayerData> allPlayerData_ = DeserializePlayerDataFromJson(jsonData);
+        PlayerDataList playerDataList = new PlayerDataList { Players = allPlayerData_ };
+        UpdateAllClientsUIRpc(playerDataList);
+    }
+
+    [Rpc(SendTo.ClientsAndHost)]
+    public void UpdateAllClientsUIRpc(PlayerDataList playerDataList)
+    {
+        UpdatePlayerList(playerDataList);
     }
 }
