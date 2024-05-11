@@ -8,6 +8,7 @@ public class PlayerText : MonoBehaviour
 
     public void SetPlayerNameText(string value)
     {
+        Debug.Log("setplayername called " + value);
         playerName.text = value;
     }
 
