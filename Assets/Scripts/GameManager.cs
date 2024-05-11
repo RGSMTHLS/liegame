@@ -36,7 +36,6 @@ public class GameManager : NetworkBehaviour
     }
     public void UpdatePlayer(PlayerData updatedPlayer)
     {
-        Debug.Log("updated plauer " + updatedPlayer.playerName + " score " + updatedPlayer.playerScore + " id " + updatedPlayer.Id);
         int index = players.Value.FindIndex(player => player.Id == updatedPlayer.Id);
         if (index != -1)
         {
