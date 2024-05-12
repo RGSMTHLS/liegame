@@ -429,7 +429,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aea8ffcabf0714dcd92d761394dffb2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  turnText: {fileID: 5693943386973240162}
 --- !u!4 &766687954
 Transform:
   m_ObjectHideFlags: 0
@@ -498,6 +497,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerTextPrefab: {fileID: 2091389678411801402, guid: fe2950489f532450b8e9874c9a115ace, type: 3}
   panel: {fileID: 8648162977039729079}
+  gameText: {fileID: 5693943386973240162}
 --- !u!4 &918753594
 Transform:
   m_ObjectHideFlags: 0

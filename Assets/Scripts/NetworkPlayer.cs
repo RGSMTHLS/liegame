@@ -34,7 +34,18 @@ public class NetworkPlayer : NetworkBehaviour
                 score = (int)playerData?.score,
                 ready = !playerData?.ready ?? false
             });
+        if (GameManager.Instance.IsAllPlayersReady())
+        {
+            StartGameRpc();
+        }
     }
+
+    [Rpc(SendTo.ClientsAndHost)]
+    private void StartGameRpc()
+    {
+        GameManager.Instance.StartGame();
+    }
+
     [Rpc(SendTo.Server)]
     private void IncreaseScoreRpc(ulong clientId)
     {
@@ -47,6 +58,7 @@ public class NetworkPlayer : NetworkBehaviour
             ready = playerData?.ready ?? false
         });
     }
+
     [Rpc(SendTo.Server)]
     private void DecreaseScoreRpc(ulong clientId)
     {

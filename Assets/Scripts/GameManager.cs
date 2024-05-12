@@ -1,10 +1,12 @@
 using System;
+using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 public class GameManager : NetworkBehaviour
 {
     [SerializeField] PlayerText playerTextPrefab;
     [SerializeField] GameObject panel;
+    [SerializeField] TextMeshProUGUI gameText;
     NetworkList<PlayerData> playerDataList = new NetworkList<PlayerData>(
         null,
     NetworkVariableReadPermission.Everyone,
@@ -66,6 +68,21 @@ public class GameManager : NetworkBehaviour
                 break;
             }
         }
+    }
+
+    public bool IsAllPlayersReady()
+    {
+        foreach (var player in playerDataList)
+        {
+            if (!player.ready)
+                return false;
+        }
+        return true;
+    }
+
+    public void StartGame()
+    {
+        gameText.text = "Game Started!";
     }
 
     public void UpdatePlayerList()
