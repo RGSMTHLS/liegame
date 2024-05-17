@@ -2,18 +2,20 @@ using System;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.UI;
 public class GameManager : NetworkBehaviour
 {
     [SerializeField] PlayerText playerTextPrefab;
     [SerializeField] GameObject panel;
     [SerializeField] TextMeshProUGUI gameText;
+    [SerializeField] Button joinButton;
+    [SerializeField] Button hostButton;
+    [SerializeField] GameObject menuPanel;
     NetworkList<PlayerData> playerDataList = new NetworkList<PlayerData>(
         null,
     NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Owner);
-
     public event EventHandler OnPlayerListChanged;
-
     public static GameManager Instance { get; private set; }
     void Awake()
     {
@@ -22,31 +24,34 @@ public class GameManager : NetworkBehaviour
         playerDataList.OnListChanged += PlayerDataList_OnListChanged;
     }
 
-    void Update()
+    void Start()
     {
-        if (Input.GetKeyDown(KeyCode.H))
-            StartHost();
-
-        if (Input.GetKeyDown(KeyCode.C))
-            NetworkManager.Singleton.StartClient();
+        hostButton.onClick.AddListener(() =>
+        {
+            var success = StartHost();
+            if (success)
+                menuPanel.SetActive(false);
+        });
+        joinButton.onClick.AddListener(async () =>
+        {
+            var success = NetworkManager.Singleton.StartClient();
+            if (success == true)
+                menuPanel.SetActive(false);
+        });
     }
-
     private void PlayerDataList_OnListChanged(NetworkListEvent<PlayerData> changeEvent)
     {
         UpdatePlayerList();
     }
-
-    public void StartHost()
+    public bool StartHost()
     {
         NetworkManager.Singleton.OnClientConnectedCallback += NetworkManager_OnClientConnectedCallback;
-        NetworkManager.Singleton.StartHost();
+        return NetworkManager.Singleton.StartHost();
     }
-
     private void NetworkManager_OnClientConnectedCallback(ulong clientId)
     {
         playerDataList.Add(new PlayerData { clientId = clientId });
     }
-
     public PlayerData? GetPlayerData(ulong clientId)
     {
         for (int i = 0; i < playerDataList.Count; i++)
@@ -56,7 +61,6 @@ public class GameManager : NetworkBehaviour
         }
         return null;
     }
-
     public void UpdatePlayerData(ulong clientId, PlayerData newData)
     {
         for (int i = 0; i < playerDataList.Count; i++)
@@ -69,9 +73,11 @@ public class GameManager : NetworkBehaviour
             }
         }
     }
-
     public bool IsAllPlayersReady()
     {
+        if (playerDataList.Count < 2)
+            return false;
+
         foreach (var player in playerDataList)
         {
             if (!player.ready)
@@ -79,7 +85,6 @@ public class GameManager : NetworkBehaviour
         }
         return true;
     }
-
     public void StartGame()
     {
         gameText.text = "Game Started!";
@@ -96,12 +101,11 @@ public class GameManager : NetworkBehaviour
             AddPlayer(player);
         }
     }
-
     public void AddPlayer(PlayerData data)
     {
         var playerTextGo = Instantiate(playerTextPrefab);
         playerTextGo.SetPlayerNameText(data.clientId.ToString());
-        playerTextGo.SetPlayerReadyText(data.ready);
+        //playerTextGo.SetPlayerReadyText(data.ready);
         playerTextGo.SetPlayerScoreText(data.score);
         playerTextGo.transform.SetParent(panel.transform, false);
     }
